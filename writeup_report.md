@@ -111,3 +111,9 @@ Here is another example of the captured input image and the crop and resize step
 ![alt text][image3]
 
 We drive in both directions on the track to generate varying training data that will help the network generalize.
+
+We keep training and running the network in the simulator to understand what effects do different network architectures have on the driving behavior. The architecture of this network has been explained above.
+
+[![Video of successful lap around the track](http://img.youtube.com/vi/F7yUR7DUyTI/0.jpg)](http://www.youtube.com/watch?v=F7yUR7DUyTI "Successful Lap on the Test Track - Behavioural Cloning")
+
+To conclude, we are now able to do successful laps without driving off the road in most cases.
