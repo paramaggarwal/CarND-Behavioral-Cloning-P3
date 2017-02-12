@@ -23,6 +23,7 @@ The goals / steps of this project are the following:
 [image1]: ./examples/data-vis.png "Data Visualization"
 [image2]: ./examples/example1-all.png "Input Crop and Resize - Example 1"
 [image3]: ./examples/example2-all.png "Input Crop and Resize - Example 2"
+[image4]: ./examples/youtube-screenshot.png "YouTube Video Link"
 
 ## Rubric Points
 ###Here I will consider the [rubric points](https://review.udacity.com/#!/rubrics/432/view) individually and describe how I addressed each point in my implementation.  
@@ -100,20 +101,22 @@ Notice that we do not use any pooling step because of the sampling step in-built
 
 Here is a visualization of the input data that we have. Around 8000 samples with varying steering angles. As it tends to turn in one direction more than the other, we immediately double this data by also feeding in a horizontally flipped version.
 
-![alt text][image1]
+![Data Visualization][image1]
 
 To capture good driving behavior, I first recorded two laps on track one using center lane driving. Here is an example image of center lane driving along with the cropping and resizing that is done on the image.
 
-![alt text][image2]
+![Input Crop and Resize - Example 1][image2]
 
 Here is another example of the captured input image and the crop and resize steps. Note that we are using very tiny 32x32 images as inputs to our network.
 
-![alt text][image3]
+![Input Crop and Resize - Example 2][image3]
 
 We drive in both directions on the track to generate varying training data that will help the network generalize.
 
 We keep training and running the network in the simulator to understand what effects do different network architectures have on the driving behavior. The architecture of this network has been explained above.
 
-[![Video of successful lap around the track](http://img.youtube.com/vi/F7yUR7DUyTI/0.jpg)](http://www.youtube.com/watch?v=F7yUR7DUyTI "Successful Lap on the Test Track - Behavioural Cloning")
+Checkout the screen recording of a successful lap that I have shared on YouTube:
+
+[![Video of successful lap around the track][image4]](http://www.youtube.com/watch?v=F7yUR7DUyTI "Successful Lap on the Test Track - Behavioral Cloning")
 
 To conclude, we are now able to do successful laps without driving off the road in most cases.
