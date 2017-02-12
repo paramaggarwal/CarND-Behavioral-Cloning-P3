@@ -2,6 +2,10 @@
 
 This project has been a great learning experience for me in actually practically working on generating my own data, architecting a good network, training a network and then testing it.
 
+I could have focussed on any of these individual areas to get this to work very well - I have actually focussed the most on the architecture of the network itself.
+
+I now have a successful model that laps the track with very minimal augmentation (just horizontal flips) and really tiny input images - 32x32. Also the network itself is very tiny and takes only a few seconds to train.
+
 ---
 
 **Behavioral Cloning Project**
@@ -48,76 +52,62 @@ The model.py file contains the code for training and saving the convolution neur
 
 ####1. An appropriate model architecture has been employed
 
-My model consists of a convolution neural network with 3x3 filter sizes and depths between 32 and 128 (model.py lines 18-24)
-
-The model includes RELU layers to introduce nonlinearity (code line 20), and the data is normalized in the model using a Keras lambda layer (code line 18).
+A Convolutional Neural Network has been deployed with a small amount of image augmentation before feeding it into the network. It is a completely end-to-end system where the raw image goes in as input and the output is just the steering angle.
 
 ####2. Attempts to reduce overfitting in the model
 
-The model contains dropout layers in order to reduce overfitting (model.py lines 21).
+The model has been kept really tiny to avoid over-fitting by definition.
 
-The model was trained and validated on different data sets to ensure that the model was not overfitting (code line 10-16). The model was tested by running it through the simulator and ensuring that the vehicle could stay on the track.
+The model was trained and validated on different data sets to ensure that the model was not overfitting. The model was tested by running it through the simulator and ensuring that the vehicle could stay on the track.
 
 ####3. Model parameter tuning
 
-The model used an adam optimizer, so the learning rate was not tuned manually (model.py line 25).
+The model used an Adam Optimizer, so the learning rate was not tuned manually. Also, we optimise the loss calculated as the mean square deviation.
 
 ####4. Appropriate training data
 
-Training data was chosen to keep the vehicle driving on the road. I used a combination of center lane driving, recovering from the left and right sides of the road ...
-
-For details about how I created the training data, see the next section.
+Training data was chosen to keep the vehicle driving on the road. I only use the data from the center camera, plus data for recovery.
 
 ###Model Architecture and Training Strategy
 
 ####1. Solution Design Approach
 
-The overall strategy for deriving a model architecture was to ...
+My first approach was to resize the image to something small and reuse some already known architecture like LeNet - 2 CNN layers and 2 hidden layers.
 
-My first step was to use a convolution neural network model similar to the ... I thought this model might be appropriate because ...
+I then slowly learned that this model is more suited for a classification usecase. I replaced the max-pooling step with subsampling and the RELU activation with ELU to get more proportional activations.
 
-In order to gauge how well the model was working, I split my image and steering angle data into a training and validation set. I found that my first model had a low mean squared error on the training set but a high mean squared error on the validation set. This implied that the model was overfitting.
+The convolution steps were tuned to not throw away data in the early layers. Hence the subsampling is done only in 3rd and 4th layer. The filter size is also keep small initially so we don't miss edges of the roads etc.
 
-To combat the overfitting, I modified the model so that ...
+Because the track will turn in one direction always, a horizontally flipped image is also fed along with the actual image. I didn't need to worry about overfitting because of the very tiny network size I restricted myself to.
 
-Then I ...
-
-The final step was to run the simulator to see how well the car was driving around track one. There were a few spots where the vehicle fell off the track... to improve the driving behavior in these cases, I ....
+The final step was to run the simulator to see how well the car was driving around track one. There were a few spots where the vehicle would dangerously veer close to the edge of the road, but it would recover quickly. For future enhancements, I would add more recovery data for such corner cases of the car getting too close to the edge of the road.
 
 At the end of the process, the vehicle is able to drive autonomously around the track without leaving the road.
 
 ####2. Final Model Architecture
 
-The final model architecture (model.py lines 18-24) consisted of a convolution neural network with the following layers and layer sizes ...
+My strategy when developing networks has been to start with the most smallest one and gradually introduce complexity. I have managed to get this to work with really small number of parameters overall.
 
-Here is a visualization of the architecture (note: visualizing the architecture is optional according to the project rubric)
+1. Layer 1 is just a 1x1 convolution filter with a depth of 3 - this acts like an auto-optimising color-space transformer - it figures out the right color-space to transform the input into.
+2. Layer 2 is a 3x3 filter with depth of 3. Here I choose a small kernel size as I want to keep as much of the details as possible. The network will most likely optimise this step into an image sharpener.
+3. Now we start feature extraction with two CNN layers with 5x5 kernels and depths of just 12 and 16. Here, we also sample the image by a factor of 2 on each step, reducing the size down to 1/4th in each dimension.
+4. Once we are done extracting features, we flatten the image and pass it via three hidden layers of 100, 50 and 10 width.
+5. The output is a single neuron.
 
-![alt text][image1]
+Notice that we do not use any pooling step because of the sampling step in-built in the CNN layer. Also, the activation is an ELU (exponential) instead of RELU (rectified linear) - this is because we are not trying to do activation based classification, but instead want a proportional relationship between input and output.
 
 ####3. Creation of the Training Set & Training Process
 
-To capture good driving behavior, I first recorded two laps on track one using center lane driving. Here is an example image of center lane driving:
+Here is a visualization of the input data that we have. Around 8000 samples with varying steering angles. As it tends to turn in one direction more than the other, we immediately double this data by also feeding in a horizontally flipped version.
+
+![alt text][image1]
+
+To capture good driving behavior, I first recorded two laps on track one using center lane driving. Here is an example image of center lane driving along with the cropping and resizing that is done on the image.
 
 ![alt text][image2]
 
-I then recorded the vehicle recovering from the left side and right sides of the road back to center so that the vehicle would learn to .... These images show what a recovery looks like starting from ... :
+Here is another example of the captured input image and the crop and resize steps. Note that we are using very tiny 32x32 images as inputs to our network.
 
 ![alt text][image3]
-![alt text][image4]
-![alt text][image5]
 
-Then I repeated this process on track two in order to get more data points.
-
-To augment the data sat, I also flipped images and angles thinking that this would ... For example, here is an image that has then been flipped:
-
-![alt text][image6]
-![alt text][image7]
-
-Etc ....
-
-After the collection process, I had X number of data points. I then preprocessed this data by ...
-
-
-I finally randomly shuffled the data set and put Y% of the data into a validation set.
-
-I used this training data for training the model. The validation set helped determine if the model was over or under fitting. The ideal number of epochs was Z as evidenced by ... I used an adam optimizer so that manually training the learning rate wasn't necessary.
+We drive in both directions on the track to generate varying training data that will help the network generalize.
