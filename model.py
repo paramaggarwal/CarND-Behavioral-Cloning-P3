@@ -2,11 +2,11 @@ import csv
 import matplotlib
 import pickle
 import numpy as np
+import matplotlib.image as mpimg
 
 from numpy import newaxis
-from image_utils import get_image_file
 from keras.models import Sequential, load_model
-from keras.layers import Convolution2D, MaxPooling2D, Flatten, Dropout, Dense
+from keras.layers import Cropping2D, Lambda, AveragePooling2D, Convolution2D, MaxPooling2D, Flatten, Dropout, Dense
 
 def read_data(batch_size):
     """
@@ -20,16 +20,27 @@ def read_data(batch_size):
             targets = []
             try:
                 for row in driving_log_reader:
-                    image = get_image_file('data/'+ row['center'])
-                    flip_image = np.fliplr(image)
-                    steering_angle = float(row['steering'])
+                    steering_offset = 0.4
+
+                    centerImage = mpimg.imread('data/'+ row['center'].strip())
+                    flippedCenterImage = np.fliplr(centerImage)
+                    centerSteering = float(row['steering'])
+
+                    leftImage = mpimg.imread('data/'+ row['left'].strip())
+                    flippedLeftImage = np.fliplr(leftImage)
+                    leftSteering = centerSteering + steering_offset
+
+                    rightImage = mpimg.imread('data/'+ row['right'].strip())
+                    flippedRightImage = np.fliplr(rightImage)
+                    rightSteering = centerSteering - steering_offset
+
                     if count == 0:
-                        inputs = np.empty([0, 32, 32, 3], dtype=float)
+                        inputs = np.empty([0, 160, 320, 3], dtype=float)
                         targets = np.empty([0, ], dtype=float)
-                    if count < int(batch_size/2):
-                        inputs = np.append(inputs, np.array([image, flip_image]), axis=0)
-                        targets = np.append(targets, np.array([steering_angle, -steering_angle]), axis=0)
-                        count += 1
+                    if count < batch_size:
+                        inputs = np.append(inputs, np.array([centerImage, flippedCenterImage, leftImage, flippedLeftImage, rightImage, flippedRightImage]), axis=0)
+                        targets = np.append(targets, np.array([centerSteering, -centerSteering, leftSteering, -leftSteering, rightSteering, -rightSteering]), axis=0)
+                        count += 6
                     else:
                         yield inputs, targets
                         count = 0
@@ -37,7 +48,7 @@ def read_data(batch_size):
                 pass
 
 
-batch_size = 100
+batch_size = 20
 use_transfer_learning = False
 
 # define model
@@ -47,25 +58,31 @@ else:
     # define model
     model = Sequential()
 
+    # crop extraneous parts of the image
+    model.add(Cropping2D(cropping=((80, 48), (0, 0)), input_shape=(160, 320, 3)))
+
+    # normalize layer values
+    model.add(Lambda(lambda x: (x / 255.0) - 0.5))
+
     # color space transformation
-    model.add(Convolution2D(3, 1, 1, border_mode='valid', activation='elu', input_shape=(32, 32, 3)))
+    model.add(Convolution2D(1, 1, 1, border_mode='valid', subsample=(1, 10), activation='elu'))
 
     # sharpen
-    model.add(Convolution2D(6, 3, 3, border_mode='valid', activation='elu'))
+    model.add(Convolution2D(3, 3, 3, border_mode='valid', activation='elu'))
 
     # filter and sample
-    model.add(Convolution2D(12, 5, 5, border_mode='valid', subsample=(2,2), activation='elu'))
+    model.add(Convolution2D(6, 5, 5, border_mode='valid', subsample=(2, 2), activation='elu'))
 
     # larger filter and sample
-    model.add(Convolution2D(16, 5, 5, border_mode='valid', subsample=(2,2), activation='elu'))
+    model.add(Convolution2D(16, 5, 5, border_mode='valid', subsample=(2, 2), activation='elu'))
 
     model.add(Flatten())
     model.add(Dense(100, activation='elu'))
-    model.add(Dense(50, activation='elu'))
-    model.add(Dense(10, activation='elu'))
+    model.add(Dense(25, activation='elu'))
     model.add(Dense(1))
     model.compile(optimizer='adam', loss='mse', metrics=['accuracy'])
+    model.summary()
 
 # train model
-model.fit_generator(read_data(batch_size), samples_per_epoch=16000, nb_epoch=5)
+model.fit_generator(read_data(batch_size), samples_per_epoch=8000*6, nb_epoch=1)
 model.save('model.h5')
