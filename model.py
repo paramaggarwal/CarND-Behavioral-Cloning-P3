@@ -6,7 +6,7 @@ import matplotlib.image as mpimg
 
 from numpy import newaxis
 from keras.models import Sequential, load_model
-from keras.layers import Cropping2D, Lambda, AveragePooling2D, Convolution2D, MaxPooling2D, Flatten, Dropout, Dense
+from keras.layers import Cropping2D, Lambda, Convolution2D, Flatten, Dense
 
 def read_data(batch_size):
     """
